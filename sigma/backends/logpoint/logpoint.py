@@ -257,7 +257,10 @@ class Logpoint(TextQueryBackend):
                 list(cond.value.s), required_fields
             )
 
-    def convert_condition(self, cond: ConditionType, state: ConversionState) -> Any:
+    def convert_condition(self, cond: ConditionType, state: ConversionState):
+        if isinstance(cond, ConditionNOT):
+            inner = self.convert_condition(cond.args[0], state)
+            return f"-{inner}" # ensure dash is directly before filter (no whitespace) 
         if (
             isinstance(cond, ConditionOR)
             or isinstance(cond, ConditionAND)
