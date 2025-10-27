@@ -258,11 +258,8 @@ class Logpoint(TextQueryBackend):
             )
 
     def convert_condition(self, cond: ConditionType, state: ConversionState) -> Any:
-        if (
-            isinstance(cond, ConditionOR)
-            or isinstance(cond, ConditionAND)
-            or isinstance(cond, ConditionNOT)
-        ):
+       
+        if isinstance(cond, (ConditionOR, ConditionAND, ConditionNOT)):
             [
                 self.modify_condition_from_json_value_construction(arg)
                 for arg in cond.args
@@ -270,4 +267,11 @@ class Logpoint(TextQueryBackend):
             ]
         elif isinstance(cond, ConditionFieldEqualsValueExpression):
             self.modify_condition_from_json_value_construction(cond)
+       
+        if isinstance(cond, ConditionNOT):
+            inner = super().convert_condition(cond.args[0], state).strip()
+            if not (inner.startswith("(") and inner.endswith(")")):
+                inner = f"({inner})"
+            return f"-{inner}"
+       
         return super().convert_condition(cond, state)
